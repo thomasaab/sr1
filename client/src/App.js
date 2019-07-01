@@ -51,6 +51,21 @@ class App extends Component {
     fileReader.readAsText(file);
   }
 
+   callFile = async () => {
+    const response = await fetch('/api/getFile');
+    const body = await response.blob();
+    if (response.status !== 200) throw Error(body.message);
+    
+    console.log(body);
+
+    let fileReader = new FileReader();
+    fileReader.onloadend = function (e){
+      var content = fileReader.result;
+      console.log("content", content);
+    }
+    fileReader.readAsText(body);
+  };
+
   handleFileSelect = (evt) => {
     if(evt.target.files.length>0){
       var files = evt.target.files; // FileList object
@@ -118,6 +133,8 @@ render() {
       {/* file */}
       <Button onClick={this.clickInLoad} color="primary">primary</Button>{' '}
       <input type="file" id="inputUpload" name="files[]" multiple/> 
+
+      <Button onClick={this.callFile} color="primary">call file</Button>{' '}
       </div>
     );
   }
