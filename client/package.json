@@ -5,10 +5,12 @@
   "proxy": "http://localhost:5000/",
   "dependencies": {
     "aes256": "^1.0.4",
+    "fs": "0.0.1-security",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
-    "reactstrap": "^8.0.0"
+    "reactstrap": "^8.0.0",
+    "read-file": "^0.2.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -30,5 +32,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "main": "index.js",
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
