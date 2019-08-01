@@ -5,6 +5,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const multer = require('multer');
 const basepath = process.cwd();
+const safeEval = require('safe-eval')
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
@@ -22,10 +23,17 @@ app.get('/api/getFile', function(req, res){
 }); 
 
 app.post('/api/world', (req, res) => {
-  console.log(req.body);
+  console.log(JSON.parse(req.body));
   res.send(
     `I received your POST request. This is what you sent me: ${req.body.post}`,
   );
+});
+app.post('/api/createFolder', (req, res) => {
+  console.log("holaaa",req.body);
+  let data = req.body;
+  eval("data = {hi:'hrllo'}");
+  console.log("heyyy",data)
+  res.json({h:"Hi"})
 });
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -60,7 +68,20 @@ const multerConfig = {
 app.post('/api/postContentFile',multer(multerConfig).array('files',2),function(req,res){	
   res.send('Complete!');
   console.log("complete")
- });
+ }); 
+
+ app.post('/api/saveJson', (req, res) => {
+  console.log("holaaa",req.body);
+  let data = req.body;
+  try {
+    fs.writeFileSync("./gabythom/p.json", JSON.stringify(data) ,function(err, result){
+      if(err) console.log('error', err);
+    })
+  } catch (err) {
+    console.error("error aquiiii", err)
+  }
+  res.json({h:"Hi"})
+});
 
  app.get('/api/getContentFile', function (req, res) {
    var name = req.query.name;

@@ -5,10 +5,15 @@
   "proxy": "http://localhost:5000/",
   "dependencies": {
     "aes256": "^1.0.4",
+    "bootstrap": "^4.3.1",
     "fs": "0.0.1-security",
+    "immutability-helper": "^3.0.1",
     "react": "^16.8.6",
+    "react-checkbox-tree": "^1.5.1",
     "react-dom": "^16.8.6",
+    "react-folder-tree": "^3.0.0",
     "react-scripts": "3.0.1",
+    "react-treebeard": "^3.2.4",
     "reactstrap": "^8.0.0",
     "read-file": "^0.2.0"
   },
