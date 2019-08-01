@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import folderPic from "./folder.svg";
 import menuPic from "./menu.svg";
 import { Container, Row, Col } from 'reactstrap';
-
+  
 class Folder extends Component {
    
   clickCard= () => {
