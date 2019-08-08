@@ -7,41 +7,49 @@ import CheckboxTree from 'react-checkbox-tree';
 import File from "./File"
 import Folder from "./Folder"
 import beforeIcon from "./beforeIcon.svg";
+import download from 'js-file-download';
 
 let aes256 = require('aes256');
-
+let arrFile = []
 class App extends Component {
   state = {
     childrens: [],
     aux:"aux",
     modalNewFolder: false,
-    checked: [],
-    expanded: [],
+    listOfChildren:[],
     key: "my passphrase;",
     here: {},
+    nameEncrypted:"",
+    portaPapel:{},
+    contentF:"",
+    nameF:"",
     nodes :[{
       value: 'mars',
       label: 'Home',
       children: [
         { 
         value: 'phobos', 
-        label: 'Phobos' 
+        label: 'Phobos1' 
         },
         { 
          value: 'deimos', 
          label: 'Deimos' ,
          children: [
           { 
-          value: 'phobos', 
-          label: 'Phobos' 
+          value: 'phobos2', 
+          label: 'Phobos2' 
           },
           { 
            value: 'deim', 
            label: 'Deim' ,
            children: [
             { 
-            value: 'phobos', 
-            label: 'Phobos' 
+            value: 'phobos3', 
+            label: 'Phobos3' 
+            },
+            { 
+            value: 'phobos4', 
+            label: 'Phobos4' 
             },
             { 
              value: 'deimo', 
@@ -63,6 +71,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    this.callJSON()
     // console.log(JSON.stringify(this.state.nodes[0]))
     // fetch('api/prueba', { // Your POST endpoint
     //   method: 'POST',
@@ -113,57 +122,57 @@ class App extends Component {
     UpdFile.addEventListener('change',this.handleFileSelect, false);
   }
 
-  callFile = async () => {
-    const response = await fetch('/api/getFile');
+  callFile = async (value,label) => {
+    const response = await fetch('/api/getFile/'+value);
     const body = await response.blob();
-    if (response.status !== 200) throw Error(body.message);
+    if (response.status !== 200){
+      console.log("ERRORRR")
+      alert("Por favor intente de nuevo")
+    }
     let key = "my passphrase;"
     let fileReader = new FileReader();
- 
-    fileReader.onloadend = function (e){
+    let content;
+    let filename=label;
+    fileReader.onloadend =  async function  (e){
 
-      let content = aes256.decrypt(key,fileReader.result);
+       content = aes256.decrypt(key,fileReader.result);
       console.log("contentdes", content);
       var fileDown =[];
-      var filename = "pruba.pdf";
+      
       fileDown[0]=content;
       fileDown[1]=filename;
-      
-      fetch('api/postForDownload', { // Your POST endpoint
+
+        await fetch('api/postForDownload', { // Your POST endpoint
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ "file": {
           "content" : content,
           "name" : filename
         }}) // This is your file object
-        }).catch(function() {
+        }).then(response =>{
+          //console.log(response.blob)
+          //download("hola",'hola.txt')
+         
+        })
+        .catch(function() {
           console.log("error in post data");
         });
      // download(content,filename,"js");
-     
-      function download(data, filename, type) {
-        var file = new Blob([data], {type: type});
-        if (window.navigator.msSaveOrOpenBlob) // IE10+
-            window.navigator.msSaveOrOpenBlob(file, filename);
-        else { // Others
-            var a = document.createElement("a"),
-                    url = URL.createObjectURL(file);
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function() {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);  
-            }, 0); 
-        }
-    
-      }
-
+        
     }
     fileReader.readAsText(body);
+    this.setState({contentF:content})
+    this.setState({nameF:filename})
+    console.log(filename)
+    this.downloadFile(filename);
   };
 
+
+  downloadFile  = async (filename) => {
+
+    window.open('http://localhost:5000/download/'+filename)
+  }
+  
   handleFileSelect = (evt) => {
     if(evt.target.files.length>0){
       var files = evt.target.files; // FileList object
@@ -177,9 +186,10 @@ class App extends Component {
     
       var formData = new FormData();
       //formData.set('files', files);
-      console.log("entro", formData)
+      
       formData.append('files', files[0]);
-      fetch('api/postContentFile', { // Your POST endpoint
+      console.log("entro", formData)
+      await fetch('api/postContentFile', { // Your POST endpoint
       method: 'POST',
       body: formData // This is your file object
       }).catch(function() {
@@ -191,36 +201,54 @@ class App extends Component {
   }
 
   getContentFile = async (files,flagError) =>{
-    const response = await fetch('api/getContentFile?name='+files[0].name).catch(function() {
+    this.setState({nameF:files[0].name})
+    console.log("name hereee",this.state.nameF)
+    let response;
+    arrFile[0] = files[0].name;
+    sessionStorage.setItem('a', files[0].name);
+     response = await fetch('api/getContentFile?name='+files[0].name).catch(function() {
 			console.log("error in get files");
 			flagError=true;
-			});
-			if(!flagError){
-			let json = await response.json();
-
-				setTimeout(() => {
-          var filename = files[0].name;
-          console.log("json",json)
-
-          var key = "my passphrase;"
-          // var contentEncrypted = aes256.encrypt(key, contentString);
-          var contentEncrypted = aes256.encrypt(key, json)
-          var nameEncrypted = aes256.encrypt(key, filename);
-          //nameEncrypted = nameEncrypted.toString().replace(":", "\/");
-          //
-          /* create file encrypt */
-          var fileEncrypted = new File([contentEncrypted], nameEncrypted);
-          console.log("fileEncrypted",fileEncrypted);
-          var formData = new FormData();
-          //formData.set('files', files);
-          formData.append('files', fileEncrypted);
-          fetch('api/file', { // Your POST endpoint
-            method: 'POST',
-            body: formData // This is your file object
-          })
-
-				}, 500);
-			}
+      });
+      if(response.status == 500){
+        console.log("ERROR 500000000")
+        alert("SERVER ERROR 500, porfavor ELIMINE el archivo e intente de nuevo o recarge la pestaNa")
+        flagError=true;
+      }else{
+        if(!flagError){
+          console.log("respuesta",response)
+        let json = await response.json();
+  
+       
+           setTimeout(async () => {
+            var filename = files[0].name;
+            console.log("json",json)
+            this.setState({nameF:filename});
+            var key = "my passphrase;"
+            // var contentEncrypted = aes256.encrypt(key, contentString);
+            var contentEncrypted = aes256.encrypt(key, json)
+            var nameEncrypted = aes256.encrypt(key, filename);
+            this.setState({nameEncrypted:nameEncrypted})
+  
+            //nameEncrypted = nameEncrypted.toString().replace(":", "\/");
+            //
+            /* create file encrypt */
+            await fetch('api/file1/', { // Your POST endpoint
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ "file": {
+                "content" : contentEncrypted,
+                "name" : nameEncrypted
+              }})  // This is your file object
+            }).catch(function() {
+              console.log("error in post data");
+              flagError=true;
+            });
+            
+          }, 600);
+        }
+      }
+			
   }
 
   selected = (clicked) => {
@@ -288,6 +316,15 @@ class App extends Component {
       }else{
         eval("data."+subPaths+".children[data."+subPaths+".children.length]= newObj")
       }
+      //this.setState({nodes:data})
+
+      setTimeout( 
+        function() {
+        this.saveJson()
+        }
+        .bind(this),
+        3000
+      ); 
 
   }
 
@@ -301,12 +338,126 @@ class App extends Component {
     path = this.search(path, this.state.nodes, this.state.here);
     let flagHome=false;
     console.log("path",path)
-
+    let flagFolderHome = false;
     path = path.replace("['value']","");
-
+    path = path.replace("nodes,0,","");
+    if(path.includes('nodes,0')){
+      flagFolderHome=true;
+    }
     console.log("path2",path)
+    path = path.replace("nodes,","");
     var auxSubPaths= path.split(',')
     
+    var subPaths = ""
+    var x=0;
+     for(var i=0; i<auxSubPaths.length;i++){
+      if(/^\d+$/.test(auxSubPaths[i+1])){
+        if(i===0){
+          subPaths=auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+        }else{
+          subPaths=subPaths+"."+auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+        }      //var newName = document.getElementById("newFolder").value;
+        i++;
+        x++;
+      } //if string is num
+     }
+     console.log("NODESSS",this.state.nodes[0])
+     console.log("SubPaths",subPaths)
+     var arr = subPaths.split(".");
+     subPaths=""
+     console.log("arrr",arr)
+     if(flagFolderHome){
+      flagHome=true;
+      alert("Estas en el home")
+     }else{
+      for(var i = 0; i<arr.length-1; i++){
+        if (i===0){
+          console.log("PASEEEE")
+          subPaths = subPaths.concat(arr[i])
+        }else{
+          subPaths = subPaths.concat("."+arr[i])
+        }
+      } console.log("SUBPATHSSSSSSS",subPaths)
+      if(arr.length==1){
+       
+        eval("this.setState({here:this.state.nodes[0]})")
+      }else{
+        eval("this.setState({here:this.state.nodes[0]."+subPaths+"})")
+      }
+      
+     }
+     console.log("SubPaths2",subPaths)
+     
+  }
+
+  saveJson= async (children) => {
+    let msj=aes256.encrypt(this.state.key, JSON.stringify(this.state.nodes))
+    console.log("msj",msj)
+
+          await fetch('api/file1/', { // Your POST endpoint
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ "file": {
+              "content" : msj,
+              "name" : "kYS1cBJ6oqukp0KTeDScD7XHvh5WJF36nDk="
+            }})  // This is your file object
+          }).catch(function() {
+            console.log("error in post data");
+            alert("recargue la pagina por favor")
+          });
+   }
+
+   listChildren = (childrenHere) =>{
+    console.log("child", childrenHere)
+    var arr =[];
+    if(childrenHere.children!== undefined){
+      for(var i=0; i<childrenHere.children.length;i++){
+        if(childrenHere.children[i].children!== "undefined"){ //is folder
+          console.log("isfolder")
+          this.listChildren(childrenHere.children[i])
+        }else{
+          console.log(childrenHere.children[i].value)
+        }
+      }
+    }else{
+      console.log(childrenHere.value)
+    }
+    return arr
+   }
+
+   deleteElement = (valueFile,isFolder) => {
+     let childrenHere=this.state.here.children;
+     let children;
+     if(isFolder){
+      this.setState({listOfChildren:[]})
+      for(var i=0;i<childrenHere.length;i++){
+        if(childrenHere[i].value===valueFile){
+          children=i;
+        }
+      }
+      var arrToDelete = this.listChildren(childrenHere[children])
+      console.log("arrToDelete",arrToDelete)
+     }else{
+
+     }
+
+   } 
+
+paste = () => {
+  console.log("paste")
+
+    var path = "nodes";
+    path = this.search(path, this.state.nodes, this.state.here);
+    let flagFolderHome = false;
+    console.log("path",path)
+    path = path.replace("['value']","");
+    path = path.replace("nodes,0,","");
+    if(path.includes('nodes,0')){
+      flagFolderHome=true;
+    }
+    console.log("path2",path)
+    var auxSubPaths= path.split(',')
+    console.log("auxSubPaths",auxSubPaths)
     var subPaths = ""
     var x=0;
      for(var i=0; i<auxSubPaths.length;i++){
@@ -320,39 +471,168 @@ class App extends Component {
         x++;
       } //if string is num
      }
-     console.log("SubPaths",subPaths)
-     var arr = subPaths.split(".");
-     subPaths=""
-     if(arr.length===1){
-      flagHome=true;
-      alert("Estas en el home")
-     }else{
-      for(var i = 0; i<arr.length-1; i++){
-        if (i===0){
-          subPaths = subPaths.concat(arr[i])
-        }else{
-          subPaths = subPaths.concat("."+arr[i])
-        }
+
+      var data = this.state.nodes[0];
+      console.log("subpth", subPaths)
+      if(flagFolderHome){
+        eval("data.children[data.children.length]= this.state.portaPapel")
+      }else{
+        eval("data."+subPaths+".children[data."+subPaths+".children.length]= this.state.portaPapel")
       }
-      eval("this.setState({here:this.state."+subPaths+"})")
-     }
-     console.log("SubPaths2",subPaths)
-     
+}
+
+copyElement = (element) => {
+console.log("HOLA VALE",element)
+//element.value="copied";
+  this.setState({portaPapel:element})
+}
+
+editName = (valueFile,newName) => {
+  var childrens = this.state.here.children;
+  var numChildren=0;
+  for(var i=0;i<childrens.length;i++){
+    if(childrens[i].value===valueFile){
+      numChildren=i;
+    }
+  }
+  console.log("numChildren",numChildren)
+  console.log("newname",newName)
+  var path = "nodes";
+  path = this.search(path, this.state.nodes, this.state.here);
+  let flagFolderHome = false;
+  console.log("path",path)
+  path = path.replace("['value']","");
+  path = path.replace("nodes,0,","");
+  if(path.includes('nodes,0')){
+    flagFolderHome=true;
+  }
+  console.log("path2",path)
+  var auxSubPaths= path.split(',')
+  console.log("auxSubPaths",auxSubPaths)
+  var subPaths = ""
+  var x=0;
+  for(var i=0; i<auxSubPaths.length;i++){
+    if(/^\d+$/.test(auxSubPaths[i+1])){
+      if(i===0){
+        subPaths=auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+      }else{
+        subPaths=subPaths+"."+auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+      }      
+      i++;
+      x++;
+    } //if string is num
   }
 
-  saveJson= (children) => {
-    fetch('api/saveJson', { // Your POST endpoint
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(this.state.nodes)
-      })
-      .then((response) => response.json())
-      .then((data) => {console.log(data)})
-      .catch(function() {
-        console.log("error in post data");
-      });
-   }
-    
+  var data = this.state.nodes[0];
+  console.log("subpth", subPaths)
+  if(flagFolderHome){
+    eval("data.children[numChildren].label= newName")
+  }else{
+    eval("data."+subPaths+".children[numChildren].label= newName")
+  }
+  this.clickInNewFolder()
+  this.clickInNewFolder()
+
+  setTimeout( 
+    function() {
+    this.saveJson()
+    }
+    .bind(this),
+    3000
+  ); 
+}
+
+uploadFile = async () => {
+  await this.clickInLoad();
+  setTimeout( 
+      function() {
+      var path = "nodes";
+      path = this.search(path, this.state.nodes, this.state.here);
+      var nameEncrypted =  this.state.nameEncrypted;
+      var nameF=  this.state.nameF;
+      console.log("NAMEEE",this.state.nameF)
+      let newObj = {
+        value: nameEncrypted,
+        label: nameF
+      }
+      let flagFolderHome = false;
+      console.log("path",path)
+      console.log("newobj", newObj)
+      path = path.replace("['value']","");
+      path = path.replace("nodes,0,","");
+      if(path.includes('nodes,0')){
+        flagFolderHome=true;
+      }
+      console.log("path2",path)
+      var auxSubPaths= path.split(',')
+      console.log("auxSubPaths",auxSubPaths)
+      var subPaths = ""
+      var x=0;
+       for(var i=0; i<auxSubPaths.length;i++){
+        if(/^\d+$/.test(auxSubPaths[i+1])){
+          if(i===0){
+            subPaths=auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+          }else{
+            subPaths=subPaths+"."+auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+          }      
+          i++;
+          x++;
+        } //if string is num
+       }
+  
+        var data = this.state.nodes[0];
+        console.log("subpth", subPaths)
+        if(flagFolderHome){
+          eval("data.children[data.children.length]= newObj")
+        }else{
+          eval("data."+subPaths+".children[data."+subPaths+".children.length]= newObj")
+        }
+        this.clickInNewFolder()
+        this.clickInNewFolder()
+        //this.setState({nodes:data})
+        setTimeout( 
+          function() {
+          this.saveJson()
+          }
+          .bind(this),
+          3000
+        ); 
+    }
+    .bind(this),
+    5000
+); 
+}
+
+callJSON = async () => {
+
+  const response = await fetch('/api/getFile/kYS1cBJ6oqukp0KTeDScD7XHvh5WJF36nDk=');
+  const body = await response.blob();
+  if (response.status !== 200){
+    console.log("ERRORRR")
+    alert("Por favor intente de nuevo")
+  }
+  let key = "my passphrase;"
+  let fileReader = new FileReader();
+  let content;
+  fileReader.onloadend =  async function  (e){
+
+    content = aes256.decrypt(key,fileReader.result);
+    console.log("contentdes", JSON.parse(content));
+    console.log("nodes",this.state.nodes)
+    var fileDown =[];
+    this.setState({nodes:JSON.parse(content)})
+    console.log("nodes",this.state.nodes)
+    fileDown[0]=content;
+    this.setState({here:this.state.nodes[0]});
+    this.clickInNewFolder()
+    this.clickInNewFolder()
+
+   // download(content,filename,"js");
+      
+  }.bind(this)
+  fileReader.readAsText(body);
+
+}  
 render() {
   const childrenFolder = [];
   const childrenFile = [];
@@ -366,13 +646,17 @@ render() {
 
         childrenFolder.push(<Col key={i} className="nodeCard " sm="8" md="3"><Folder  number={i}  
           children={auxChildren[i]}labelFile={auxChildren[i].label} 
-          valueFile={auxChildren[i].label} changeHere={this.changeHere} /></Col>);
+          valueFile={auxChildren[i].value} changeHere={this.changeHere}
+          deleteElement={this.deleteElement} copyElement={this.copyElement}
+          editName={this.editName} /></Col>);
         
         flagEmpty = true;
       }else{//Es un file
 
         childrenFile.push(<Col key={i} className="nodeCard " sm="8" md="3"><File  number={i}
-         labelFile={auxChildren[i].label} valueFile={auxChildren[i].label}/></Col>);
+         labelFile={auxChildren[i].label} valueFile={auxChildren[i].value}
+         deleteElement={this.deleteElement} copyElement={this.copyElement}
+         editName={this.editName} callFile = {this.callFile} /></Col>);
         flagEmpty = true;
       }
         
@@ -390,6 +674,9 @@ render() {
         <Row>
           <Button color="primary" onClick={this.clickInNewFolder}>Create Folder</Button>
           <Button color="primary" onClick={this.saveJson}>save</Button>
+          <Button color="primary" onClick={this.callJSON}>callJSON</Button>
+          <Button color="primary" onClick={this.paste}>Paste</Button>
+          <Button color="primary" onClick={this.uploadFile}>Upload file</Button>
         </Row>
         <br></br>
         <br></br>
@@ -412,6 +699,7 @@ render() {
           </Col>
         </Row>
 
+        {/* modal new folder */}
         <Modal isOpen={this.state.modalNewFolder} toggle={this.clickInNewFolder}>
           <ModalHeader toggle={this.clickInNewFolder}>Create Folder</ModalHeader>
           <ModalBody>
@@ -426,6 +714,9 @@ render() {
           </ModalFooter>
         </Modal>
         
+ 
+
+
         {/* file */}
 
         <br></br>
@@ -466,7 +757,7 @@ render() {
         <input type="file" id="inputUpload" name="files[]" multiple/> 
 
         <Button onClick={this.callFile} color="primary">call file</Button>{' '}
-        
+        <Button onClick={this.downloadFile} color="primary">dw</Button>{' '}
 
       </Container>
     );
