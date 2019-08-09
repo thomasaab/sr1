@@ -18,6 +18,8 @@ app.get('/', function(req, res){
   res.sendFile('index.html');
 }); 
 
+
+
 process.on('uncaughtException', function (err) {
   console.log(err);
 }); 
@@ -41,6 +43,16 @@ app.post('/api/createFolder', (req, res) => {
   let data = req.body;
   eval("data = {hi:'hrllo'}");
   console.log("heyyy",data)
+  res.json({h:"Hi"})
+});
+
+app.post('/api/deleteFile', function(req,res){
+  //console.log("holaaa",req);
+  let data = req.body;
+  console.log("heyyy1",req.body[0])
+  console.log("heyyy2",req.body[1])
+  console.log("heyyy3",req.body.length )
+
   res.json({h:"Hi"})
 });
 app.use(bodyParser.urlencoded({ extended: true }));

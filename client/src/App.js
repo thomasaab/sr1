@@ -68,9 +68,43 @@ class App extends Component {
   componentWillMount() {
     console.log("this.state.nodes[0]")
     this.setState({here:this.state.nodes[0]});
-  }
+   
+  //    this.setState({here:
+  //     { value: 'mars',
+  //     label: 'Home',
+  //     isFolder:true,
+  //     children: [
+  //       { value: 'mars1',
+  //     label: 'Home1',
+  //     isFolder:true,
+  //     children: [
+        
+  //     ]  
+  //     }
+  //     ]  
+  //     }
+  // })
 
+  
+  }
+  inicio = async () => {
+    await this.setState({nodes: [{ value: 'mars',
+    label: 'Home',
+    isFolder:true,
+    children: [
+      { value: 'mars1',
+    label: 'Home1',
+    isFolder:true,
+    children: [
+      
+    ]  
+    }
+    ]  
+    }]})
+    console.log(this.state.nodes)
+  }
   componentDidMount() {
+   //this.inicio()
     this.callJSON()
     // console.log(JSON.stringify(this.state.nodes[0]))
     // fetch('api/prueba', { // Your POST endpoint
@@ -278,10 +312,12 @@ class App extends Component {
       modalNewFolder: !prevState.modalNewFolder
     }));
     var path = "nodes";
+    console.log("AQUI PRUEBA",this.state.nodes )
     path = this.search(path, this.state.nodes, this.state.here);
     let newObj = {
       value: aes256.encrypt(this.state.key, newName),
       label: newName,
+      isFolder:true,
       children: []
     }
     let flagFolderHome = false;
@@ -407,39 +443,111 @@ class App extends Component {
           });
    }
 
-   listChildren = (childrenHere) =>{
+   listChildren = (childrenHere,arr) =>{
     console.log("child", childrenHere)
-    var arr =[];
-    if(childrenHere.children!== undefined){
-      for(var i=0; i<childrenHere.children.length;i++){
-        if(childrenHere.children[i].children!== "undefined"){ //is folder
+    //console.log("PRUEBA",childrenHere.children)
+    if(childrenHere.children!== "undefined"){
+      for(var i=0; i<childrenHere.length;i++){
+        console.log("purueba if", childrenHere[i].children === 'undefined')
+        if(childrenHere[i].isFolder === true){ //is folder
           console.log("isfolder")
-          this.listChildren(childrenHere.children[i])
+          console.log("PRUEBA",childrenHere[i].children)
+          this.listChildren(childrenHere[i].children,arr)
         }else{
-          console.log(childrenHere.children[i].value)
+          arr.push(childrenHere[i].value)
         }
       }
-    }else{
-      console.log(childrenHere.value)
-    }
+     }else{
+      console.log("here22",childrenHere )
+       arr.push(childrenHere.value)
+     }
     return arr
    }
 
    deleteElement = (valueFile,isFolder) => {
      let childrenHere=this.state.here.children;
      let children;
+     var arrToDelete = [];
+     for(var i=0;i<childrenHere.length;i++){
+      if(childrenHere[i].value===valueFile){
+        children=i;
+      }
+    }
      if(isFolder){
       this.setState({listOfChildren:[]})
-      for(var i=0;i<childrenHere.length;i++){
-        if(childrenHere[i].value===valueFile){
-          children=i;
-        }
-      }
-      var arrToDelete = this.listChildren(childrenHere[children])
-      console.log("arrToDelete",arrToDelete)
+     
+      arrToDelete = this.listChildren(childrenHere[children].children,[])
+     
      }else{
-
+      arrToDelete[0]=valueFile;
      }
+
+     var path = "nodes";
+     path = this.search(path, this.state.nodes, this.state.here);
+     let flagFolderHome = false;
+     console.log("path",path)
+     path = path.replace("['value']","");
+     path = path.replace("nodes,0,","");
+     if(path.includes('nodes,0')){
+       flagFolderHome=true;
+     }
+     console.log("path2",path)
+     var auxSubPaths= path.split(',')
+     console.log("auxSubPaths",auxSubPaths)
+     var subPaths = ""
+     var x=0;
+     for(var i=0; i<auxSubPaths.length;i++){
+       if(/^\d+$/.test(auxSubPaths[i+1])){
+         if(i===0){
+           subPaths=auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+         }else{
+           subPaths=subPaths+"."+auxSubPaths[i]+"["+auxSubPaths[i+1]+"]"
+         }      
+         i++;
+         x++;
+       } //if string is num
+     }
+   
+     var data = this.state.nodes[0];
+     console.log("subpth", subPaths)
+     if(flagFolderHome){
+       eval("data.children[children]= {}")
+     }else{
+       eval("data."+subPaths+".children[children]= {}")
+     }
+     this.clickInNewFolder()
+     this.clickInNewFolder()
+   
+     setTimeout( 
+       function() {
+       this.saveJson()
+       }
+       .bind(this),
+       3000
+     ); 
+     console.log("arrToDelete",arrToDelete)
+       var stringDelete = ""
+       for(var j = 0 ; j < arrToDelete.length ; j++ ){
+         if(j===0){
+          stringDelete = arrToDelete[j]
+         }else{
+          stringDelete = stringDelete+" "+arrToDelete[j]
+         }
+        
+       }
+       console.log("stringDelete",stringDelete)
+
+     fetch('/api/deleteFile', { // Your POST endpoint
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(arrToDelete)
+      })
+      .then((response) => response.json())
+      .then((data) => {console.log(data)})
+      .catch(function() {
+        console.log("error in post data");
+      });
+  
 
    } 
 
@@ -553,7 +661,8 @@ uploadFile = async () => {
       console.log("NAMEEE",this.state.nameF)
       let newObj = {
         value: nameEncrypted,
-        label: nameF
+        label: nameF,
+        isFolder:false
       }
       let flagFolderHome = false;
       console.log("path",path)
@@ -641,7 +750,9 @@ render() {
   console.log("here",this.state.here)
     let auxChildren=this.state.here.children;
     for (var i = 0; i < auxChildren.length; i += 1) {
-      
+      if(typeof auxChildren[i].label === "undefined"){
+        console.log("boorrado")
+      }else
       if(typeof auxChildren[i].children !== "undefined") {  // ES PADRE (Carpeta)
 
         childrenFolder.push(<Col key={i} className="nodeCard " sm="8" md="3"><Folder  number={i}  

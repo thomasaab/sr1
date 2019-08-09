@@ -11,7 +11,7 @@ class File extends Component {
     this.props.changeHere(this.props.children);
   }
   clickDelete = () => {
-    this.props.deleteElement(this.props.valueFile,true)
+    this.props.deleteElement(this.props.valueFile,false)
   }
   clickCopy = () => {
     var aux = this.props.children;
