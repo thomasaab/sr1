@@ -203,8 +203,10 @@ class App extends Component {
 
 
   downloadFile  = async (filename) => {
-
-    window.open('http://localhost:5000/download/'+filename)
+    setTimeout(function() {
+      window.open('http://localhost:5000/download/'+filename)  
+  }, 1000);
+   
   }
   
   handleFileSelect = (evt) => {
@@ -526,16 +528,6 @@ class App extends Component {
        3000
      ); 
      console.log("arrToDelete",arrToDelete)
-       var stringDelete = ""
-       for(var j = 0 ; j < arrToDelete.length ; j++ ){
-         if(j===0){
-          stringDelete = arrToDelete[j]
-         }else{
-          stringDelete = stringDelete+" "+arrToDelete[j]
-         }
-        
-       }
-       console.log("stringDelete",stringDelete)
 
      fetch('/api/deleteFile', { // Your POST endpoint
       method: 'POST',

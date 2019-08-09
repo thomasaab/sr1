@@ -52,7 +52,18 @@ app.post('/api/deleteFile', function(req,res){
   console.log("heyyy1",req.body[0])
   console.log("heyyy2",req.body[1])
   console.log("heyyy3",req.body.length )
+  for(var i=0;i<req.body.length; i++){
+    try {
+      fs.unlink(basepath + '/gabythom/'+req.body[i] ,function(err, result){
+        if(err) console.log('error', err);
+      })
+      fs.close()
+    } catch (err) {
+      console.error("error aquiiii", err)
+      fs.close()
+    }
 
+  }
   res.json({h:"Hi"})
 });
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -187,7 +198,15 @@ app.post('/api/file1', (req, res) => {
 
 app.get('/download/:name', function(req, res){
   console.log("nameeese",req.params.name)
-  res.download('filess/'+req.params.name);
+ 
+    res.download('filess/'+req.params.name);  
+
+  setTimeout(function() {
+    fs.unlink(basepath + '/filess/'+req.params.name, (err) => {
+      if (err) throw err;
+        console.log('Deleted succesfully');
+     });   
+}, 500); 
 }); 
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
