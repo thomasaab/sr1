@@ -15,7 +15,7 @@ class File extends Component {
   }
   clickCopy = () => {
     var aux = this.props.children;
-    aux.value = "copied"
+    console.log("PRUEBAAA CHILDREEN",this.props.children)
     this.props.copyElement(aux)
   }
   clickEdit= () => {

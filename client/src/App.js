@@ -105,6 +105,16 @@ class App extends Component {
   }
   componentDidMount() {
    //this.inicio()
+   fetch('/folder', { // Your POST endpoint
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(["h","h"])
+    })
+    .then((response) => response.json())
+    .then((data) => {console.log(data)})
+    .catch(function() {
+      console.log("error in post data");
+    });
     this.callJSON()
     // console.log(JSON.stringify(this.state.nodes[0]))
     // fetch('api/prueba', { // Your POST endpoint
@@ -264,22 +274,38 @@ class App extends Component {
             // var contentEncrypted = aes256.encrypt(key, contentString);
             var contentEncrypted = aes256.encrypt(key, json)
             var nameEncrypted = aes256.encrypt(key, filename);
-            this.setState({nameEncrypted:nameEncrypted})
+
+           
+              if(nameEncrypted.includes("/")){
+                alert("ERROR: por favor elimine el archivo recien subido he intentelo de nuevo. Razon: hay un slash en el value")
+                
+              }
+            
+
+            setTimeout( 
+              function() {
+                
   
-            //nameEncrypted = nameEncrypted.toString().replace(":", "\/");
-            //
-            /* create file encrypt */
-            await fetch('api/file1/', { // Your POST endpoint
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ "file": {
-                "content" : contentEncrypted,
-                "name" : nameEncrypted
-              }})  // This is your file object
-            }).catch(function() {
-              console.log("error in post data");
-              flagError=true;
-            });
+                //nameEncrypted = nameEncrypted.toString().replace(":", "\/");
+                //
+                /* create file encrypt */
+                 fetch('api/file1/', { // Your POST endpoint
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ "file": {
+                    "content" : contentEncrypted,
+                    "name" : nameEncrypted
+                  }})  // This is your file object
+                }).catch(function() {
+                  console.log("error in post data");
+                  flagError=true;
+                });
+                this.setState({nameEncrypted:nameEncrypted})
+              }
+              .bind(this),
+              1000
+            ); 
+            
             
           }, 600);
         }
@@ -543,7 +569,7 @@ class App extends Component {
 
    } 
 
-paste = () => {
+paste = async () => {
   console.log("paste")
 
     var path = "nodes";
@@ -572,13 +598,27 @@ paste = () => {
       } //if string is num
      }
 
-      var data = this.state.nodes[0];
+      //var data = this.state.nodes[0];
+      var data = JSON.stringify(this.state.nodes);
+      console.log("DATAAA",data)
+      console.log("PORTAPEEELLL",this.state.portaPapel)
       console.log("subpth", subPaths)
+      var data2 = JSON.parse(data);
+      console.log("DATA22",data2)
+      var here2;
       if(flagFolderHome){
-        eval("data.children[data.children.length]= this.state.portaPapel")
+        eval("data2[0].children[data2[0].children.length]= this.state.portaPapel")
+        eval ("this.setState({here:data2[0]})")
       }else{
-        eval("data."+subPaths+".children[data."+subPaths+".children.length]= this.state.portaPapel")
+        eval("data2[0]."+subPaths+".children[data2[0]."+subPaths+".children.length]= this.state.portaPapel")
+        eval("this.setState({here:data2[0]."+subPaths+"})")
       }
+      console.log(data2)
+      //await this.setState({here:here2})
+      console.log("HEREE 22",this.state.here)
+      await this.setState({nodes:data2})
+      console.log("NODEESSS UPD", this.state.nodes)
+
 }
 
 copyElement = (element) => {
@@ -648,6 +688,7 @@ uploadFile = async () => {
       function() {
       var path = "nodes";
       path = this.search(path, this.state.nodes, this.state.here);
+
       var nameEncrypted =  this.state.nameEncrypted;
       var nameF=  this.state.nameF;
       console.log("NAMEEE",this.state.nameF)
@@ -757,7 +798,7 @@ render() {
       }else{//Es un file
 
         childrenFile.push(<Col key={i} className="nodeCard " sm="8" md="3"><File  number={i}
-         labelFile={auxChildren[i].label} valueFile={auxChildren[i].value}
+        children={auxChildren[i]} labelFile={auxChildren[i].label} valueFile={auxChildren[i].value}
          deleteElement={this.deleteElement} copyElement={this.copyElement}
          editName={this.editName} callFile = {this.callFile} /></Col>);
         flagEmpty = true;
@@ -776,8 +817,8 @@ render() {
         <img src={beforeIcon} width="40px" alt="Folder" className="clickeable " onClick={this.clickInBefore}></img>
         <Row>
           <Button color="primary" onClick={this.clickInNewFolder}>Create Folder</Button>
-          <Button color="primary" onClick={this.saveJson}>save</Button>
-          <Button color="primary" onClick={this.callJSON}>callJSON</Button>
+          {/* <Button color="primary" onClick={this.saveJson}>save</Button>
+          <Button color="primary" onClick={this.callJSON}>callJSON</Button> */}
           <Button color="primary" onClick={this.paste}>Paste</Button>
           <Button color="primary" onClick={this.uploadFile}>Upload file</Button>
         </Row>
@@ -816,51 +857,12 @@ render() {
             <Button color="secondary" onClick={this.clickInNewFolder}>Cancel</Button>
           </ModalFooter>
         </Modal>
-        
- 
-
-
-        {/* file */}
-
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <br></br>
-        <Button onClick={this.clickInLoad} color="primary">primary</Button>{' '}
         <input type="file" id="inputUpload" name="files[]" multiple/> 
+        {/* <Button onClick={this.clickInLoad} color="primary">primary</Button>{' '}
+        
 
         <Button onClick={this.callFile} color="primary">call file</Button>{' '}
-        <Button onClick={this.downloadFile} color="primary">dw</Button>{' '}
+        <Button onClick={this.downloadFile} color="primary">dw</Button>{' '} */}
 
       </Container>
     );

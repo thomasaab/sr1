@@ -208,5 +208,14 @@ app.get('/download/:name', function(req, res){
      });   
 }, 500); 
 }); 
+app.post('/folder', function(req, res){
+var fs = require('fs');
+var dir = './tmp';
+
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+} 
+}); 
+
 
 app.listen(port, () => console.log(`Listening on port ${port}`));

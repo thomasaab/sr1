@@ -16,7 +16,6 @@ class Folder extends Component {
   }
   clickCopy = () => {
     var aux = this.props.children;
-    aux.value = "copied"
     this.props.copyElement(aux)
   }
   clickEdit= () => {
